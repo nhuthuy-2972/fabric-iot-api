@@ -11,10 +11,10 @@ const FabricCAServices = require("fabric-ca-client");
 // GET CCP:
 const getCCP = async (org) => {
   let ccpPath;
-  if (org == "Org1") {
-    ccpPath = path.resolve(__dirname, "..", "config", "connection-org1.json");
-  } else if (org == "Org2") {
-    ccpPath = path.resolve(__dirname, "..", "config", "connection-org2.json");
+  if (org == process.env.ORGWRITER) {
+    ccpPath = path.resolve(__dirname, "..", "config", process.env.CONNECTFILEWRITER);
+  } else if (org == process.env.ORGREADER) {
+    ccpPath = path.resolve(__dirname, "..", "config", process.env.CONNECTFILEREADER);
   } else return null;
   const ccpJSON = fs.readFileSync(ccpPath, "utf8");
   const ccp = JSON.parse(ccpJSON);
@@ -24,10 +24,10 @@ const getCCP = async (org) => {
 // GET CA URL:
 const getCaUrl = async (org, ccp) => {
   let caURL;
-  if (org == "Org1") {
-    caURL = ccp.certificateAuthorities["ca.org1.example.com"].url;
-  } else if (org == "Org2") {
-    caURL = ccp.certificateAuthorities["ca.org2.example.com"].url;
+  if (org == process.env.ORGWRITER) {
+    caURL = ccp.certificateAuthorities[process.env.CAWRITER].url;
+  } else if (org == process.env.ORGREADER) {
+    caURL = ccp.certificateAuthorities[process.env.CAREADER].url;
   } else return null;
   return caURL;
 };
@@ -35,21 +35,21 @@ const getCaUrl = async (org, ccp) => {
 // GET WALLET:
 const getWalletPath = async (org) => {
   let walletPath;
-  if (org == "Org1") {
-    walletPath = path.join(process.cwd(), "./wallet/Org1");
-  } else if (org == "Org2") {
-    walletPath = path.join(process.cwd(), "./wallet/Org2");
+  if (org == process.env.ORGWRITER) {
+    walletPath = path.join(process.cwd(), "./.wallet/writer");
+  } else if (org == process.env.ORGREADER) {
+    walletPath = path.join(process.cwd(), "./.wallet/reader");
   } else return null;
   return walletPath;
 };
 
 // GET AFFILIANTION
 const getAffiliantion = async (org) => {
-  return org == "Org1" ? "org1.department1" : "org2.department1";
+  return org === process.env.ORGWRITER ? process.env.DEPARTMENTWRITER : process.env.DEPARTMENTREADER;
 };
 
 // GET REGISTER USER
-const getRegisterUser = async (username, userOrg, channel, role) => {
+const getRegisterUser = async (username, userOrg, deviceID) => {
   let ccp = await getCCP(userOrg);
   const caURL = await getCaUrl(userOrg, ccp);
   const ca = new FabricCAServices(caURL);
@@ -76,7 +76,7 @@ const getRegisterUser = async (username, userOrg, channel, role) => {
     console.log(
       `An identity for the admin user '${adminId}' does not exist in the wallet`
     );
-    await enrollAdmin(userOrg, ccp, channel);
+    await enrollAdmin(userOrg, ccp);
     adminIdentity = await wallet.get(adminId);
     console.log("Admin Enrolled Successfully");
   }
@@ -91,7 +91,7 @@ const getRegisterUser = async (username, userOrg, channel, role) => {
         affiliation: await getAffiliantion(userOrg),
         enrollmentID: username,
         role: "client",
-        attrs: [{ name: "channelName", value: channel, ecert: true }, { name: "role", value: role, ecert: true }],
+        attrs: [{ name: "deviceID", value: deviceID, ecert: true }],
       },
       adminUser
     );
@@ -102,7 +102,7 @@ const getRegisterUser = async (username, userOrg, channel, role) => {
   const enrollment = await ca.enroll({
     enrollmentID: username,
     enrollmentSecret: secret,
-    attr_reqs: [{ name: "channelName", optional: false }, { name: "role", optional: false }],
+    attr_reqs: [{ name: "deviceID", optional: false }],
   });
   console.log(enrollment.certificate);
   let x509Identity = {
@@ -110,7 +110,7 @@ const getRegisterUser = async (username, userOrg, channel, role) => {
       certificate: enrollment.certificate,
       privateKey: enrollment.key.toBytes(),
     },
-    mspId: userOrg === "Org1" ? "Org1MSP" : "Org2MSP",
+    mspId: userOrg === process.env.ORGWRITER ? process.env.ORGWRITERMSP : process.env.ORGREADERMSP,
     type: "X.509",
   };
 
@@ -141,10 +141,10 @@ const isUserRegistered = async (username, userOrg) => {
 
 const getCaInfo = async (org, ccp) => {
   let caInfo;
-  if (org == "Org1") {
-    caInfo = ccp.certificateAuthorities["ca.org1.example.com"];
-  } else if (org == "Org2") {
-    caInfo = ccp.certificateAuthorities["ca.org2.example.com"];
+  if (org == process.env.ORGWRITER) {
+    caInfo = ccp.certificateAuthorities[process.env.CAWRITER];
+  } else if (org == process.env.ORGREADER) {
+    caInfo = ccp.certificateAuthorities[process.env.CAREADER];
   } else return null;
   return caInfo;
 };
@@ -183,7 +183,7 @@ const enrollAdmin = async (org, ccp) => {
         certificate: enrollment.certificate,
         privateKey: enrollment.key.toBytes(),
       },
-      mspId: org === "Org1" ? "Org1MSP" : "Org2MSP",
+      mspId: org === process.env.ORGWRITER ? process.env.ORGWRITERMSP : process.env.ORGREADERMSP,
       type: "X.509",
     };
 

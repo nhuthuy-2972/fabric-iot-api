@@ -95,10 +95,10 @@ module.exports.pushDataDevice = async (channelName, username, org_name, deviceID
         const network = await gateway.getNetwork(channelName);
 
         const contract = network.getContract(process.env.CHAINCODENAME);
-        console.log(contract)
+        // console.log(contract)
         let result;
-        console.log(data)
-        console.log(deviceID)
+        // console.log(data)
+        // console.log(deviceID)
         result = await contract.submitTransaction(process.env.PUSHDATAFUNC, deviceID, JSON.stringify(data))
         return result;
         // return { a: "aaaa" }
