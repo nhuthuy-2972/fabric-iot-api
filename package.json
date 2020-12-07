@@ -24,7 +24,7 @@
     "express-session": "^1.17.1",
     "fabric-ca-client": "^2.2.3",
     "fabric-network": "^2.2.3",
-    "firebase-admin": "^9.4.1",
+    "firebase-admin": "^9.3.0",
     "http": "0.0.1-security",
     "js-yaml": "^3.14.0",
     "jsonwebtoken": "^8.5.1",

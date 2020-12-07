@@ -52,6 +52,7 @@ module.exports.verifyOnwer = async (req, res, next) => {
 
 
 module.exports.ownerBCUser = async (req, res) => {
+    console.log("do roi ne")
     const token = req.token
     const { userAccount, deviceType, channelID } = req.body
     const colectionName = deviceType === 'own' ? 'ownDevice' : 'refDevices';

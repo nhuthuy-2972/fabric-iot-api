@@ -60,7 +60,7 @@ app.use(
         secret: process.env.SECRECTJWT,
         algorithms: ["HS256"],
     }).unless({
-        path: ["/api/user", "/api/user/sharedevice", "/api/user/adddevice", "/api/user/gettoken", "/api/device", "/api/device/pushdata"],
+        path: ["/api/admin","/api/admin/setcustomclaims", "/api/user", "/api/user/sharedevice", "/api/user/adddevice", "/api/user/gettoken", "/api/device", "/api/device/pushdata"],
     })
 );
 app.use(bearerToken());

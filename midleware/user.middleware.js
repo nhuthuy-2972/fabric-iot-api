@@ -15,8 +15,9 @@ module.exports.verifytoken = async (req, res, next) => {
         return;
     }
     try {
-        const { uid, name } = await firebase.auth().verifyIdToken(token);
+        const { uid, name,email } = await firebase.auth().verifyIdToken(token);
         req.body.uid = uid;
+        req.body.email = email;
         req.body.name = name;
         next();
     } catch (err) {
@@ -38,18 +39,16 @@ module.exports.verifyOnwer = async (req, res, next) => {
     }
 
     console.log("do verify owner")
-    // console.log(token)
     try {
-        const { uid, name } = await firebase.auth().verifyIdToken(token);
-        const docs = db.collection("ownDevice").where("auth", "==", uid).where('deviceID', "==", deviceID);
+        const { uid } = await firebase.auth().verifyIdToken(token);
+        const docs = db.collection("device").doc(deviceID)
+        
         docs.get().then(async (doc) => {
-            console.log(doc.size)
-            if (doc.size > 0) {
+            if (doc.exists && doc.data().auth === uid && doc.data().actived === 'yes')  {
                 console.log(userAccount)
                 try {
                     const userRecord = await firebase.auth().getUserByEmail(userAccount)
                     console.log(userRecord.uid)
-                    req.body.owner = name;
                     req.body.auth = userRecord.uid;
                     next();
                 } catch (err) {
@@ -60,8 +59,6 @@ module.exports.verifyOnwer = async (req, res, next) => {
                     });
                     return;
                 }
-
-
             } else {
                 console.log("No device");
                 res.send({
@@ -83,19 +80,17 @@ module.exports.verifyOnwer = async (req, res, next) => {
 
 }
 
-
 module.exports.ownerBCUser = async (req, res, next) => {
     const token = req.token
-    const { userAccount, deviceType, deviceID } = req.body
-    const colectionName = deviceType === 'own' ? 'ownDevice' : 'refDevices';
-    if (!token || !deviceID || !userAccount || !deviceType) {
+    const { bcIdentity, deviceID } = req.body
+    if (!token || !deviceID || !bcIdentity) {
         res.json(getErrorMessage());
         return;
     }
 
     try {
         const { uid } = await firebase.auth().verifyIdToken(token);
-        const docs = db.collection(colectionName).where("auth", "==", uid).where('bcUser', "==", userAccount).where('deviceID', "==", deviceID);
+        const docs = db.collection('bcAccounts').where("auth", "==", uid).where('bcIdentity', "==", bcIdentity).where('deviceID', "==", deviceID);
         docs.get().then(async (doc) => {
             console.log(doc.size)
             if (doc.size > 0) {
@@ -104,7 +99,7 @@ module.exports.ownerBCUser = async (req, res, next) => {
             } else {
                 res.send({
                     success: false,
-                    message: `${userAccount} does not exist`
+                    message: `${bcIdentity} does not exist`
                 });
                 return;
             }
@@ -118,3 +113,39 @@ module.exports.ownerBCUser = async (req, res, next) => {
         return;
     }
 }
+
+
+// module.exports.ownerBCUser = async (req, res, next) => {
+//     const token = req.token
+//     const { userAccount, deviceType, deviceID } = req.body
+//     const colectionName = deviceType === 'own' ? 'ownDevice' : 'refDevices';
+//     if (!token || !deviceID || !userAccount || !deviceType) {
+//         res.json(getErrorMessage());
+//         return;
+//     }
+
+//     try {
+//         const { uid } = await firebase.auth().verifyIdToken(token);
+//         const docs = db.collection(colectionName).where("auth", "==", uid).where('bcUser', "==", userAccount).where('deviceID', "==", deviceID);
+//         docs.get().then(async (doc) => {
+//             console.log(doc.size)
+//             if (doc.size > 0) {
+//                 req.body.uid = uid;
+//                 next();
+//             } else {
+//                 res.send({
+//                     success: false,
+//                     message: `${userAccount} does not exist`
+//                 });
+//                 return;
+//             }
+//         })
+//     } catch (err) {
+//         console.log("loi ne", err)
+//         res.send({
+//             success: false,
+//             message: err
+//         });
+//         return;
+//     }
+// }

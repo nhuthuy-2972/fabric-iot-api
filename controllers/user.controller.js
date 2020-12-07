@@ -5,7 +5,7 @@ const helper = require("../helper/helper");
 const constants = require("../config/constans.json");
 const { randomBytes } = require('crypto');
 const dotenv = require("dotenv");
-import { db } from '../fbadim/fb-hook'
+import { db ,firebase} from '../fbadim/fb-hook'
 import { sendmail } from '../mailer/mailer'
 dotenv.config();
 const getErrorMessage = () => {
@@ -18,26 +18,23 @@ const getErrorMessage = () => {
 
 
 module.exports.adddevice = async (req, res) => {
-    const { uid, name, infoDevice } = req.body;
-    if (!uid || !name || !infoDevice) {
+    const { uid, name, infoDevice,email } = req.body;
+    if (!uid || !name || !infoDevice || !email)  {
         res.json(getErrorMessage());
         return;
     }
     try {
         const { id } = await db
-            .collection('devices')
+            .collection('device')
             .add({
                 ...infoDevice,
+                actived : 'no',
+                auth : uid,
+                email : email,
+                refUser : [],
                 date: new Date().toLocaleString(),
             })
 
-        let deviceItem = {
-            actived: "no",
-            auth: uid,
-            deviceID: id,
-            device: db.doc('devices/' + id)
-        }
-        await db.collection('ownDevice').add(deviceItem)
         const text = `Chào anh tài bđ cho em thêm máy mới nghe hihi!!!\nUID: ${uid}\nDeviceID: ${id}`
         sendmail(name, 'nhuthuy2972@gmail.com', text)
         res.json({
@@ -54,9 +51,9 @@ module.exports.adddevice = async (req, res) => {
 }
 
 module.exports.registerEnrollNewUser = async (req, res) => {
-    const { deviceID, auth, owner, sensors } = req.body
+    const { deviceID, auth, sensors } = req.body
 
-    if (!auth || !deviceID || !owner || !sensors) {
+    if (!auth || !deviceID  || !sensors) {
         res.json(getErrorMessage());
         return;
     }
@@ -66,17 +63,14 @@ module.exports.registerEnrollNewUser = async (req, res) => {
         if (response && typeof response !== "string") {
             logger.debug('Successfully registered the username %s for organization %s', username, process.env.ORGREADER);
             const doc = {
-                actived: 'yes',
                 auth: auth,
-                owner: owner,
                 deviceID: deviceID,
-                // channel: channel,
-                device: db.doc('devices/' + deviceID),
-                refSensors: sensors,
-                bcUser: username
+                bcIdentity: username
             }
-            await db.collection('refDevices').add(doc);
-            // response.token = token
+            await db.collection('bcAccounts').add(doc);
+            await db.collection('device').doc(deviceID).update({
+                refUser : firebase.firestore.FieldValue.arrayUnion(auth)
+            })
             res.json({ status: true, message: response });
         } else {
             res.json({ success: false, message: response });
@@ -91,11 +85,11 @@ module.exports.registerEnrollNewUser = async (req, res) => {
 
 module.exports.getToken = async (req, res) => {
     const { body } = req;
-    const { userAccount, uid, deviceID } = body;
+    const { bcIdentity, uid, deviceID } = body;
     logger.debug(
-        "Username: " + userAccount
+        "Username: " + bcIdentity
     );
-    if (!userAccount || !uid || !deviceID) {
+    if (!bcIdentity || !uid || !deviceID) {
         res.json(getErrorMessage());
         return;
     }
@@ -103,18 +97,18 @@ module.exports.getToken = async (req, res) => {
     let token = jwt.sign(
         {
             exp: Math.floor(Date.now() / 1000) + parseInt(constants.jwt_expresstime),
-            userAccount: userAccount,
+            userAccount: bcIdentity,
             uid: uid,
             deviceID: deviceID
         },
         process.env.SECRECTJWT
     );
-    let isUserRegistered = await helper.isUserRegistered(userAccount, process.env.ORGREADER);
+    let isUserRegistered = await helper.isUserRegistered(bcIdentity, process.env.ORGREADER);
 
     if (isUserRegistered) {
         res.json({
             success: true,
-            message: { token: token },
+            token : token
         });
     } else {
         // res.json({
