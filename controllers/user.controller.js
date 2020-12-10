@@ -20,7 +20,7 @@ const getErrorMessage = () => {
 module.exports.adddevice = async (req, res) => {
     const { uid, name, infoDevice,email } = req.body;
     if (!uid || !name || !infoDevice || !email)  {
-        res.json(getErrorMessage());
+        res.status(403).json(getErrorMessage());
         return;
     }
     try {
@@ -43,9 +43,9 @@ module.exports.adddevice = async (req, res) => {
         })
     } catch (err) {
         console.log("Loi roi : ", err)
-        res.status(404).json({
+        res.status(403).json({
             status: false,
-            message: err
+            message: err.message
         })
     }
 }
@@ -93,19 +93,20 @@ module.exports.getToken = async (req, res) => {
         res.json(getErrorMessage());
         return;
     }
-
-    let token = jwt.sign(
-        {
-            exp: Math.floor(Date.now() / 1000) + parseInt(constants.jwt_expresstime),
-            userAccount: bcIdentity,
-            uid: uid,
-            deviceID: deviceID
-        },
-        process.env.SECRECTJWT
-    );
+   
     let isUserRegistered = await helper.isUserRegistered(bcIdentity, process.env.ORGREADER);
 
     if (isUserRegistered) {
+        const token = jwt.sign(
+            {
+                exp: Math.floor(Date.now() / 1000) + parseInt(constants.jwt_expresstime),
+                bcIdentity: bcIdentity,
+                uid: uid,
+                deviceID: deviceID
+            },
+            process.env.SECRECTJWT
+        );
+
         res.json({
             success: true,
             token : token

@@ -11,7 +11,7 @@ const getErrorMessage = () => {
 module.exports.verifytoken = async (req, res, next) => {
     const token = req.token;
     if (!token) {
-        res.json(getErrorMessage());
+        res.status(403).json(getErrorMessage());
         return;
     }
     try {
@@ -24,7 +24,7 @@ module.exports.verifytoken = async (req, res, next) => {
         console.log("Error: " + err);
         res.status(403).json({
             status: false,
-            message: err
+            message: err.message
         })
     }
 }
@@ -84,7 +84,7 @@ module.exports.ownerBCUser = async (req, res, next) => {
     const token = req.token
     const { bcIdentity, deviceID } = req.body
     if (!token || !deviceID || !bcIdentity) {
-        res.json(getErrorMessage());
+        res.status(401).json(getErrorMessage());
         return;
     }
 
@@ -97,7 +97,7 @@ module.exports.ownerBCUser = async (req, res, next) => {
                 req.body.uid = uid;
                 next();
             } else {
-                res.send({
+                res.status(401).json({
                     success: false,
                     message: `${bcIdentity} does not exist`
                 });
@@ -106,9 +106,9 @@ module.exports.ownerBCUser = async (req, res, next) => {
         })
     } catch (err) {
         console.log("loi ne", err)
-        res.send({
+        res.status(401).json({
             success: false,
-            message: err
+            message: err.message
         });
         return;
     }
