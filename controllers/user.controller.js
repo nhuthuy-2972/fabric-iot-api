@@ -15,7 +15,28 @@ const getErrorMessage = () => {
     };
     return respone;
 };
+module.exports.updatePhoneNumber = async (req,res)=>{
+    const {uid ,phoneNumber} =req.body
+    if (!uid || !phoneNumber)  {
+        res.status(403).json(getErrorMessage());
+        return;
+    }
 
+    try{
+        const user = await firebase.auth().updateUser(uid,{phoneNumber : phoneNumber})
+        console.log(user)
+        res.json({
+            status: true,
+            message: "Update phone Number success"
+        })
+    }catch(err){
+        console.log(err)
+        res.status(403).json({
+            status: false,
+            message: err.message
+        })
+    }
+}
 
 module.exports.adddevice = async (req, res) => {
     const { uid, name, infoDevice,email } = req.body;
@@ -36,7 +57,7 @@ module.exports.adddevice = async (req, res) => {
             })
 
         const text = `Chào anh tài bđ cho em thêm máy mới nghe hihi!!!\nUID: ${uid}\nDeviceID: ${id}`
-        sendmail(name, 'nhuthuy2972@gmail.com', text)
+        // sendmail(name, 'iot.blockchain.2020@gmail.com', text)
         res.json({
             status: true,
             message: "add device completed"

@@ -68,6 +68,7 @@ app.use(
       "/api/user/sharedevice",
       "/api/user/adddevice",
       "/api/user/gettoken",
+      "/api/user/updatephonenumber",
       "/api/device",
       "/api/device/pushdata",
     ],

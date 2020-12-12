@@ -32,8 +32,8 @@ module.exports.verifytoken = async (req, res, next) => {
 
 module.exports.verifyOnwer = async (req, res, next) => {
     const token = req.token
-    const { deviceID, userAccount } = req.body
-    if (!token || !deviceID || !userAccount) {
+    const { deviceID, shareAccount } = req.body
+    if (!token || !deviceID || !shareAccount) {
         res.json(getErrorMessage());
         return;
     }
@@ -45,9 +45,9 @@ module.exports.verifyOnwer = async (req, res, next) => {
         
         docs.get().then(async (doc) => {
             if (doc.exists && doc.data().auth === uid && doc.data().actived === 'yes')  {
-                console.log(userAccount)
+                console.log(shareAccount)
                 try {
-                    const userRecord = await firebase.auth().getUserByEmail(userAccount)
+                    const userRecord = await firebase.auth().getUserByEmail(shareAccount)
                     console.log(userRecord.uid)
                     req.body.auth = userRecord.uid;
                     next();
