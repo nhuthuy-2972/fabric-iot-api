@@ -70,6 +70,7 @@ app.use(
       "/api/user/gettoken",
       "/api/user/updatephonenumber",
       "/api/user/getrefuserinfo",
+      "/api/user/updatefieldshare",
       "/api/device",
       "/api/device/pushdata",
     ],

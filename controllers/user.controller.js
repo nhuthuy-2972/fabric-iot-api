@@ -72,27 +72,31 @@ module.exports.adddevice = async (req, res) => {
 }
 
 module.exports.registerEnrollNewUser = async (req, res) => {
-    const { deviceID, sensors ,email} = req.body
+    const { deviceID, sensors,auth} = req.body
 
-    if (!deviceID  || !sensors || !email) {
+    if (!deviceID  || !sensors || !auth) {
         res.status(401).json(getErrorMessage());
         return;
     }
     const username = randomBytes(20).toString('hex');
     try {
-        const userRecord = await firebase.auth().getUserByEmail(email)
         let response = await helper.getRegisterUser(username, process.env.ORGREADER, deviceID);
         if (response && typeof response !== "string") {
             logger.debug('Successfully registered the username %s for organization %s', username, process.env.ORGREADER);
             const doc = {
-                auth: userRecord.uid,
+                auth: auth,
                 deviceID: deviceID,
                 bcIdentity: username,
+            }
+            const docref ={
+                auth : auth,
+                deviceID : deviceID,
                 data_fields : sensors
             }
+            await db.collection('fieldRef').add(docref)
             await db.collection('bcAccounts').add(doc);
             await db.collection('device').doc(deviceID).update({
-                refUser : firebase.firestore.FieldValue.arrayUnion(userRecord.uid)
+                refUser : firebase.firestore.FieldValue.arrayUnion(auth)
             })
             res.json({ status: true, message: response });
         } else {
@@ -105,6 +109,31 @@ module.exports.registerEnrollNewUser = async (req, res) => {
 
 };
 
+module.exports.updateSharefield = async (req,res)=>
+{
+    const {auth,deviceID,sensors} = req.body
+    if (!auth || !deviceID || !sensors) {
+        res.status(401).json(getErrorMessage());
+        return;
+    }
+    try{
+
+        db.collection('fieldRef').where("auth",'==',auth).where("deviceID","==",deviceID).get().then(doc=>{
+            doc.forEach(elem=>{
+                console.log(elem.id)
+                db.collection('fieldRef').doc(elem.id).update({
+                    data_fields : sensors
+                })
+            })
+            res.json({success : true,message : "Update success"})
+        }).catch(err=>{res.status(401).json({success : false ,message : err.message})})
+    }catch(err)
+    {
+        res.status(401).json({success : false , message : err.message});
+        return;
+        console.log(err.message)
+    }
+}
 
 module.exports.getToken = async (req, res) => {
     const { body } = req;
@@ -165,7 +194,7 @@ module.exports.getRefUser = async (req,res)=>{
         
         const usersInfo = await users.map((info) =>{
         //    console.log(info.displayName)
-            return {displayName :info.displayName,email :info.email,phoneNumber :info.phoneNumber}
+            return {uid :info.uid ,displayName :info.displayName,email :info.email,phoneNumber :info.phoneNumber}
         })
         console.log(usersInfo);
         res.json({

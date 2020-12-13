@@ -80,6 +80,114 @@ module.exports.verifyOnwer = async (req, res, next) => {
 
 }
 
+module.exports.verifyOnwerShareDevice = async (req, res, next) => {
+    const token = req.token
+    const { deviceID, email } = req.body
+    if (!token || !deviceID || !email ) {
+        res.status(401).json(getErrorMessage());
+        return;
+    }
+
+    console.log("do verify owner")
+    try {
+        const { uid } = await firebase.auth().verifyIdToken(token);
+        const docs = db.collection("device").doc(deviceID)
+        docs.get().then(async (doc) => {
+            if (doc.exists && doc.data().auth === uid && doc.data().actived === 'yes')  {
+                // next();
+                try {
+                    const userRecord = await firebase.auth().getUserByEmail(email)
+                    console.log(userRecord.uid)
+                    if(doc.data().refUser.includes(userRecord.uid)){
+                        console.log('ton tai roi')
+                        res.json({success:false , message : "Người dùng đã tồn tại"})
+                        return
+                    }
+                    req.body.auth = userRecord.uid;
+                    next();
+                } catch (err) {
+                    console.log("loi ne he", err)
+                    res.status(401).json({
+                        success: false,
+                        message: err.message
+                    });
+                    return;
+                }
+            } else {
+                console.log("No device");
+                res.status(401).json({
+                    success: false,
+                    message: 'device does not exits'
+                });
+                return;
+            }
+        })
+
+    } catch (err) {
+        console.log("loi ne", err)
+        res.status(401).json({
+            success: false,
+            message: err.message
+        });
+        
+    }
+
+}
+
+module.exports.verifyOnwerUpdateShareDevice = async (req, res, next) => {
+    const token = req.token
+    const { deviceID, email } = req.body
+    if (!token || !deviceID || !email ) {
+        res.status(401).json(getErrorMessage());
+        return;
+    }
+
+    console.log("do verify owner")
+    try {
+        const { uid } = await firebase.auth().verifyIdToken(token);
+        const docs = db.collection("device").doc(deviceID)
+        docs.get().then(async (doc) => {
+            if (doc.exists && doc.data().auth === uid && doc.data().actived === 'yes')  {
+                // next();
+                try {
+                    const userRecord = await firebase.auth().getUserByEmail(email)
+                    console.log(userRecord.uid)
+                    if(doc.data().refUser.includes(userRecord.uid)){
+                        req.body.auth = userRecord.uid;
+                        next();
+                    }else{
+                        res.status(401).json({success : false, message : "Nguoi dung chua duoc chia se"})
+                    }
+                                        
+                } catch (err) {
+                    console.log("loi ne he", err)
+                    res.status(401).json({
+                        success: false,
+                        message: err.message
+                    });
+                    return;
+                }
+            } else {
+                console.log("No device");
+                res.status(401).json({
+                    success: false,
+                    message: 'device does not exits'
+                });
+                return;
+            }
+        })
+
+    } catch (err) {
+        console.log("loi ne", err)
+        res.status(401).json({
+            success: false,
+            message: err.message
+        });
+        
+    }
+
+}
+
 module.exports.ownerBCUser = async (req, res, next) => {
     const token = req.token
     const { bcIdentity, deviceID } = req.body
@@ -113,6 +221,7 @@ module.exports.ownerBCUser = async (req, res, next) => {
         return;
     }
 }
+
 
 
 // module.exports.ownerBCUser = async (req, res, next) => {
