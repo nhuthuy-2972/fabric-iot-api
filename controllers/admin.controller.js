@@ -74,7 +74,7 @@ module.exports.activedevice = async (req, res) => {
       return;
     }
     const usernamereader = randomBytes(20).toString("hex");
-    const usernamewriter = randomBytes(20).toString("hex");
+    const usernamewriter = randomBytes(10).toString("hex");
 
     try {
       let responsereader = await helper.getRegisterUser(
@@ -87,6 +87,7 @@ module.exports.activedevice = async (req, res) => {
         process.env.ORGWRITER,
         deviceID
       );
+      console.log("Aaa")
       if (
         responsewriter &&
         typeof responsewriter !== "string" &&
@@ -107,20 +108,19 @@ module.exports.activedevice = async (req, res) => {
           auth: auth,
           deviceID: deviceID,
           bcIdentity: usernamereader,
-          reader : true,
           revoke :false
         };
         const docwriter = {
           auth: auth,
           deviceID: deviceID,
           bcIdentity: usernamewriter,
-          reader : false,
           revoke :false
         };
         let batch = db.batch();
 
         const readerRef = db.collection("bcAccounts").doc();
-        const writerRef = db.collection("bcAccounts").doc();
+        // const writerRef = db.collection("bcAccounts").doc();
+        const writerRef = db.collection('deviceTokens').doc();
         const updateRef = db.collection("device").doc(deviceID);
         batch.set(readerRef, docreader);
         batch.set(writerRef, docwriter);
@@ -132,9 +132,11 @@ module.exports.activedevice = async (req, res) => {
         },process.env.SECRECTJWT)
 
         const text = formatmail(email,deviceName,deviceID,deviceToken)
-        sendmail("IOT-FABRIC-SERVICE", email, text)
+        // sendmail("IOT-FABRIC-SERVICE", email, text)
         res.json({ status: true, message: "success" });
       } else {
+        console.log(responsereader)
+        console.log(responsewriter)
         res.json({ success: false, message: "Failed register user" });
       }
     } catch (err) {

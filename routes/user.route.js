@@ -8,6 +8,7 @@ const middleware = require("../midleware/user.middleware")
 router.post("/adddevice", [middleware.verifytoken], controller.adddevice);
 router.post("/updatephonenumber", [middleware.verifytoken], controller.updatePhoneNumber);
 router.post("/sharedevice", [middleware.verifyOnwer], controller.registerEnrollNewUser);
+router.post("/getrefuserinfo", [middleware.verifyOnwer], controller.getRefUser);
 router.post("/gettoken", [middleware.ownerBCUser], controller.getToken);
 
 module.exports = router;

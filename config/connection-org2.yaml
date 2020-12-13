@@ -21,40 +21,40 @@ peers:
     tlsCACerts:
       pem: |
         -----BEGIN CERTIFICATE-----
-          MIICHjCCAcWgAwIBAgIUfyvAz+oAZa786bLnvVEqsMCbWocwCgYIKoZIzj0EAwIw
+          MIICHzCCAcWgAwIBAgIUOhwKF3kmRNvM26Ggci+DJ3ta6hIwCgYIKoZIzj0EAwIw
           bDELMAkGA1UEBhMCVUsxEjAQBgNVBAgTCUhhbXBzaGlyZTEQMA4GA1UEBxMHSHVy
           c2xleTEZMBcGA1UEChMQb3JnMi5leGFtcGxlLmNvbTEcMBoGA1UEAxMTY2Eub3Jn
-          Mi5leGFtcGxlLmNvbTAeFw0yMDEyMDgwODQxMDBaFw0zNTEyMDUwODQxMDBaMGwx
+          Mi5leGFtcGxlLmNvbTAeFw0yMDEyMTMwODMxMDBaFw0zNTEyMTAwODMxMDBaMGwx
           CzAJBgNVBAYTAlVLMRIwEAYDVQQIEwlIYW1wc2hpcmUxEDAOBgNVBAcTB0h1cnNs
           ZXkxGTAXBgNVBAoTEG9yZzIuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2NhLm9yZzIu
-          ZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATMANcw+B108QCf
-          PTGkL6cZCA/kYbzsVw7MHoDZR/gjSSCe1Mv3p+JIKLiT2CbxijXFZR+OoD6eq+Nz
-          oCrfrFxVo0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd
-          BgNVHQ4EFgQUSozy8pCrb9juY73JqqOKxjdzCbMwCgYIKoZIzj0EAwIDRwAwRAIg
-          YO6Cb/R0OUHRol7VZCaKVmr6tyULGGjG0DOICBdhJBwCIHM8KjfP82qiXYLqzgZR
-          s+nWYWWsPpP6o1vHuDVVepz8
+          ZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQYJ5PfOJ5SF5lE
+          QJlL8PHsEI0ORB4LqsC64/hxfuPBx+oBSCN8pa0JNCHRFum2SdlsnAmL4WYfXwNy
+          rTApvDgWo0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd
+          BgNVHQ4EFgQUbT7H9TcW5eCG/94CXkHvH3g6/TUwCgYIKoZIzj0EAwIDSAAwRQIh
+          AJVsSkw7pYOCQXHD2yhclsmagHs+G/TxJexmtEMpa8FyAiBGYapes9Zwp7vk8vSY
+          /khAawj3YzZUxVYkb5z40H7Tag==
           -----END CERTIFICATE-----
           
     grpcOptions:
       ssl-target-name-override: peer0.org2.example.com
       hostnameOverride: peer0.org2.example.com
   peer1.org2.example.com:
-    url: grpcs://localhost:${P1PORT}
+    url: grpcs://localhost:10051
     tlsCACerts:
       pem: |
         -----BEGIN CERTIFICATE-----
-          MIICHjCCAcWgAwIBAgIUfyvAz+oAZa786bLnvVEqsMCbWocwCgYIKoZIzj0EAwIw
+          MIICHzCCAcWgAwIBAgIUOhwKF3kmRNvM26Ggci+DJ3ta6hIwCgYIKoZIzj0EAwIw
           bDELMAkGA1UEBhMCVUsxEjAQBgNVBAgTCUhhbXBzaGlyZTEQMA4GA1UEBxMHSHVy
           c2xleTEZMBcGA1UEChMQb3JnMi5leGFtcGxlLmNvbTEcMBoGA1UEAxMTY2Eub3Jn
-          Mi5leGFtcGxlLmNvbTAeFw0yMDEyMDgwODQxMDBaFw0zNTEyMDUwODQxMDBaMGwx
+          Mi5leGFtcGxlLmNvbTAeFw0yMDEyMTMwODMxMDBaFw0zNTEyMTAwODMxMDBaMGwx
           CzAJBgNVBAYTAlVLMRIwEAYDVQQIEwlIYW1wc2hpcmUxEDAOBgNVBAcTB0h1cnNs
           ZXkxGTAXBgNVBAoTEG9yZzIuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2NhLm9yZzIu
-          ZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATMANcw+B108QCf
-          PTGkL6cZCA/kYbzsVw7MHoDZR/gjSSCe1Mv3p+JIKLiT2CbxijXFZR+OoD6eq+Nz
-          oCrfrFxVo0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd
-          BgNVHQ4EFgQUSozy8pCrb9juY73JqqOKxjdzCbMwCgYIKoZIzj0EAwIDRwAwRAIg
-          YO6Cb/R0OUHRol7VZCaKVmr6tyULGGjG0DOICBdhJBwCIHM8KjfP82qiXYLqzgZR
-          s+nWYWWsPpP6o1vHuDVVepz8
+          ZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQYJ5PfOJ5SF5lE
+          QJlL8PHsEI0ORB4LqsC64/hxfuPBx+oBSCN8pa0JNCHRFum2SdlsnAmL4WYfXwNy
+          rTApvDgWo0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd
+          BgNVHQ4EFgQUbT7H9TcW5eCG/94CXkHvH3g6/TUwCgYIKoZIzj0EAwIDSAAwRQIh
+          AJVsSkw7pYOCQXHD2yhclsmagHs+G/TxJexmtEMpa8FyAiBGYapes9Zwp7vk8vSY
+          /khAawj3YzZUxVYkb5z40H7Tag==
           -----END CERTIFICATE-----
           
     grpcOptions:
@@ -68,18 +68,18 @@ certificateAuthorities:
       pem:
         - |
           -----BEGIN CERTIFICATE-----
-          MIICHjCCAcWgAwIBAgIUfyvAz+oAZa786bLnvVEqsMCbWocwCgYIKoZIzj0EAwIw
+          MIICHzCCAcWgAwIBAgIUOhwKF3kmRNvM26Ggci+DJ3ta6hIwCgYIKoZIzj0EAwIw
           bDELMAkGA1UEBhMCVUsxEjAQBgNVBAgTCUhhbXBzaGlyZTEQMA4GA1UEBxMHSHVy
           c2xleTEZMBcGA1UEChMQb3JnMi5leGFtcGxlLmNvbTEcMBoGA1UEAxMTY2Eub3Jn
-          Mi5leGFtcGxlLmNvbTAeFw0yMDEyMDgwODQxMDBaFw0zNTEyMDUwODQxMDBaMGwx
+          Mi5leGFtcGxlLmNvbTAeFw0yMDEyMTMwODMxMDBaFw0zNTEyMTAwODMxMDBaMGwx
           CzAJBgNVBAYTAlVLMRIwEAYDVQQIEwlIYW1wc2hpcmUxEDAOBgNVBAcTB0h1cnNs
           ZXkxGTAXBgNVBAoTEG9yZzIuZXhhbXBsZS5jb20xHDAaBgNVBAMTE2NhLm9yZzIu
-          ZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATMANcw+B108QCf
-          PTGkL6cZCA/kYbzsVw7MHoDZR/gjSSCe1Mv3p+JIKLiT2CbxijXFZR+OoD6eq+Nz
-          oCrfrFxVo0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd
-          BgNVHQ4EFgQUSozy8pCrb9juY73JqqOKxjdzCbMwCgYIKoZIzj0EAwIDRwAwRAIg
-          YO6Cb/R0OUHRol7VZCaKVmr6tyULGGjG0DOICBdhJBwCIHM8KjfP82qiXYLqzgZR
-          s+nWYWWsPpP6o1vHuDVVepz8
+          ZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQYJ5PfOJ5SF5lE
+          QJlL8PHsEI0ORB4LqsC64/hxfuPBx+oBSCN8pa0JNCHRFum2SdlsnAmL4WYfXwNy
+          rTApvDgWo0UwQzAOBgNVHQ8BAf8EBAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAd
+          BgNVHQ4EFgQUbT7H9TcW5eCG/94CXkHvH3g6/TUwCgYIKoZIzj0EAwIDSAAwRQIh
+          AJVsSkw7pYOCQXHD2yhclsmagHs+G/TxJexmtEMpa8FyAiBGYapes9Zwp7vk8vSY
+          /khAawj3YzZUxVYkb5z40H7Tag==
           -----END CERTIFICATE-----
           
     httpOptions:

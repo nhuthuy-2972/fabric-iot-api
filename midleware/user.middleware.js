@@ -32,9 +32,9 @@ module.exports.verifytoken = async (req, res, next) => {
 
 module.exports.verifyOnwer = async (req, res, next) => {
     const token = req.token
-    const { deviceID, shareAccount } = req.body
-    if (!token || !deviceID || !shareAccount) {
-        res.json(getErrorMessage());
+    const { deviceID } = req.body
+    if (!token || !deviceID ) {
+        res.status(401).json(getErrorMessage());
         return;
     }
 
@@ -45,20 +45,20 @@ module.exports.verifyOnwer = async (req, res, next) => {
         
         docs.get().then(async (doc) => {
             if (doc.exists && doc.data().auth === uid && doc.data().actived === 'yes')  {
-                console.log(shareAccount)
-                try {
-                    const userRecord = await firebase.auth().getUserByEmail(shareAccount)
-                    console.log(userRecord.uid)
-                    req.body.auth = userRecord.uid;
-                    next();
-                } catch (err) {
-                    console.log("loi ne he", err)
-                    res.send({
-                        success: false,
-                        message: err
-                    });
-                    return;
-                }
+                next();
+                // try {
+                //     const userRecord = await firebase.auth().getUserByEmail(shareAccount)
+                //     console.log(userRecord.uid)
+                //     req.body.auth = userRecord.uid;
+                //     next();
+                // } catch (err) {
+                //     console.log("loi ne he", err)
+                //     res.send({
+                //         success: false,
+                //         message: err
+                //     });
+                //     return;
+                // }
             } else {
                 console.log("No device");
                 res.send({
@@ -71,11 +71,11 @@ module.exports.verifyOnwer = async (req, res, next) => {
 
     } catch (err) {
         console.log("loi ne", err)
-        res.send({
+        res.status(401).json({
             success: false,
-            message: err
+            message: err.message
         });
-        return;
+        
     }
 
 }

@@ -72,33 +72,35 @@ module.exports.adddevice = async (req, res) => {
 }
 
 module.exports.registerEnrollNewUser = async (req, res) => {
-    const { deviceID, auth, sensors } = req.body
+    const { deviceID, sensors ,email} = req.body
 
-    if (!auth || !deviceID  || !sensors) {
-        res.json(getErrorMessage());
+    if (!deviceID  || !sensors || !email) {
+        res.status(401).json(getErrorMessage());
         return;
     }
     const username = randomBytes(20).toString('hex');
     try {
+        const userRecord = await firebase.auth().getUserByEmail(email)
         let response = await helper.getRegisterUser(username, process.env.ORGREADER, deviceID);
         if (response && typeof response !== "string") {
             logger.debug('Successfully registered the username %s for organization %s', username, process.env.ORGREADER);
             const doc = {
-                auth: auth,
+                auth: userRecord.uid,
                 deviceID: deviceID,
-                bcIdentity: username
+                bcIdentity: username,
+                data_fields : sensors
             }
             await db.collection('bcAccounts').add(doc);
             await db.collection('device').doc(deviceID).update({
-                refUser : firebase.firestore.FieldValue.arrayUnion(auth)
+                refUser : firebase.firestore.FieldValue.arrayUnion(userRecord.uid)
             })
             res.json({ status: true, message: response });
         } else {
-            res.json({ success: false, message: response });
+            res.status(401).json({ success: false, message: response });
         }
     } catch (err) {
         console.error(err);
-        res.json({ success: false, message: response });
+        res.status(401).json({ success: false, message: err.message });
     }
 
 };
@@ -111,7 +113,7 @@ module.exports.getToken = async (req, res) => {
         "Username: " + bcIdentity
     );
     if (!bcIdentity || !uid || !deviceID) {
-        res.json(getErrorMessage());
+        res.status(401).json(getErrorMessage());
         return;
     }
    
@@ -138,8 +140,42 @@ module.exports.getToken = async (req, res) => {
         //   message: `${username} is not registered with ${orgName} on channel ${channel}`,
         // });
         console.log("loi ne")
-        res.error(401).json({
+        res.status(401).json({
             message: "user does not exist"
         })
     }
 };
+
+module.exports.getRefUser = async (req,res)=>{
+    const {refUsers} = req.body
+    logger.debug(
+        "Username: " + refUsers
+    );
+    if (!refUsers) {
+        res.status(401).json(getErrorMessage());
+        return;
+    }
+
+    try{
+        const usersid = await refUsers.map(uid=>{
+            return {uid : uid}
+        })
+        const {users} = await firebase.auth().getUsers(usersid)
+        // console.log(users)
+        
+        const usersInfo = await users.map((info) =>{
+        //    console.log(info.displayName)
+            return {displayName :info.displayName,email :info.email,phoneNumber :info.phoneNumber}
+        })
+        console.log(usersInfo);
+        res.json({
+            success : true,
+            users : usersInfo
+        })
+    }catch(err)
+    {
+        res.status(401).json({
+            success : false, message : err.message
+        })
+    }
+}
