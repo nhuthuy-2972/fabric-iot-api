@@ -91,7 +91,10 @@ const getRegisterUser = async (username, userOrg, deviceID) => {
         affiliation: await getAffiliantion(userOrg),
         enrollmentID: username,
         role: "client",
-        attrs: [{ name: "deviceID", value: deviceID, ecert: true }],
+        attrs: [
+          { name: "deviceID", value: deviceID, ecert: true },
+          { name : 'role', value : 'owner' , ecert :true}
+        ],
       },
       adminUser
     );
@@ -125,6 +128,159 @@ const getRegisterUser = async (username, userOrg, deviceID) => {
   };
   return respone;
 };
+
+
+const getRegisterUser1 = async (username, userOrg, deviceID,role,sharefield) => {
+  let ccp = await getCCP(userOrg);
+  const caURL = await getCaUrl(userOrg, ccp);
+  const ca = new FabricCAServices(caURL);
+
+  const walletPath = await getWalletPath(userOrg);
+  const wallet = await Wallets.newFileSystemWallet(walletPath);
+  console.log(`Wallet path: ${walletPath}`);
+
+  const userIdentity = await wallet.get(username);
+  if (userIdentity) {
+    console.log(
+      `An identity for the user ${username} already exists in the wallet`
+    );
+    var respone = {
+      success: true,
+      message: username + " endrolled Successfully",
+    };
+    return respone;
+  }
+  const adminId = process.env.ADMINUSERID;
+
+  let adminIdentity = await wallet.get(adminId);
+  if (!adminIdentity) {
+    console.log(
+      `An identity for the admin user '${adminId}' does not exist in the wallet`
+    );
+    await enrollAdmin(userOrg, ccp);
+    adminIdentity = await wallet.get(adminId);
+    console.log("Admin Enrolled Successfully");
+  }
+
+  // build a user object for authenticating with the CA
+  const provider = wallet.getProviderRegistry().getProvider(adminIdentity.type);
+  const adminUser = await provider.getUserContext(adminIdentity, adminId);
+  let secret;
+  try {
+    secret = await ca.register(
+      {
+        affiliation: await getAffiliantion(userOrg),
+        enrollmentID: username,
+        role: "client",
+        attrs: [
+          { name: "deviceID", value: deviceID, ecert: true },
+          {
+            name : 'role' , value : role , ecert : true 
+          },
+          {
+            name : 'refField',
+            value : JSON.stringify(sharefield),
+            ecert : true
+          }
+        ],
+      },
+      adminUser
+    );
+  } catch (error) {
+    return error.message;
+  }
+
+  const enrollment = await ca.enroll({
+    enrollmentID: username,
+    enrollmentSecret: secret,
+    attr_reqs: [{ name: "deviceID", optional: false },{ name: "role", optional: false },{ name: "refField", optional: false }],
+  });
+  console.log(enrollment.certificate);
+  let x509Identity = {
+    credentials: {
+      certificate: enrollment.certificate,
+      privateKey: enrollment.key.toBytes(),
+    },
+    mspId: userOrg === process.env.ORGWRITER ? process.env.ORGWRITERMSP : process.env.ORGREADERMSP,
+    type: "X.509",
+  };
+
+
+  await wallet.put(username, x509Identity);
+  console.log(
+    `Successfully registered and enrolled admin user ${username} and imported it into the wallet`
+  );
+  var respone = {
+    success: true,
+    message: username + " enrolled Successfully",
+  };
+  return respone;
+};
+
+
+
+const updateShareField = async (userId ,attrValue) =>
+{
+
+  let ccp = await getCCP(process.env.ORGREADER);
+  const caURL = await getCaUrl(process.env.ORGREADER, ccp);
+  const caClient = new FabricCAServices(caURL);
+
+  const walletPath = await getWalletPath(process.env.ORGREADER);
+  const wallet = await Wallets.newFileSystemWallet(walletPath);
+  // console.log(`Wallet path: ${walletPath}`);
+
+	try {
+		const userIdentity = await wallet.get(userId);
+		if (!userIdentity) {
+			console.log(`${userId} does not exists in the wallet`);
+			// console.log(userIdentity);
+			return;
+		}
+
+		const adminIdentity = await wallet.get(process.env.ADMINUSERID);
+		if (!adminIdentity) {
+			console.log('An identity for the admin user does not exist in the wallet');
+			console.log('Enroll the admin user before retrying');
+			return;
+		}
+
+
+		const provider = wallet.getProviderRegistry().getProvider(adminIdentity.type);
+		const adminProvider = await provider.getUserContext(adminIdentity, process.env.ADMINUSERID);
+		const identityService = caClient.newIdentityService()	
+		const user =  await identityService.getOne(userId,adminProvider)
+		console.log(user.result.attrs)
+
+		const customattrs = {
+			attrs :[
+				{
+					name : 'refField',
+					value : JSON.stringify(attrValue),
+					ecert : true
+				}
+			]
+		}
+
+		const response = await identityService.update(userId,customattrs,adminProvider)
+		console.log("userIdenity attributes: ",response.result.attrs)
+		const Userprovider = wallet.getProviderRegistry().getProvider(userIdentity.type);
+		const UserProvider = await Userprovider.getUserContext(userIdentity, userId);
+		const enrollment = await caClient.reenroll(UserProvider)
+		console.log(enrollment)
+		const x509Identity = {
+			credentials: {
+				certificate: enrollment.certificate,
+				privateKey: enrollment.key.toBytes(),
+			},
+			mspId: process.env.ORGREADERMSP,
+			type: 'X.509',
+		};
+		await wallet.put(userId, x509Identity);
+	} catch (error) {
+		console.error(`Failed to update attrs ${error}`)
+	}
+}
 
 const isUserRegistered = async (username, userOrg) => {
   const walletPath = await getWalletPath(userOrg);

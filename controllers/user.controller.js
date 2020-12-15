@@ -80,7 +80,7 @@ module.exports.registerEnrollNewUser = async (req, res) => {
     }
     const username = randomBytes(20).toString('hex');
     try {
-        let response = await helper.getRegisterUser(username, process.env.ORGREADER, deviceID);
+        let response = await helper.getRegisterUser1(username, process.env.ORGREADER, deviceID,'refuser',sensors);
         if (response && typeof response !== "string") {
             logger.debug('Successfully registered the username %s for organization %s', username, process.env.ORGREADER);
             const doc = {
@@ -117,8 +117,9 @@ module.exports.updateSharefield = async (req,res)=>
         return;
     }
     try{
+        
 
-        db.collection('fieldRef').where("auth",'==',auth).where("deviceID","==",deviceID).get().then(doc=>{
+        await db.collection('fieldRef').where("auth",'==',auth).where("deviceID","==",deviceID).get().then(doc=>{
             doc.forEach(elem=>{
                 console.log(elem.id)
                 db.collection('fieldRef').doc(elem.id).update({
