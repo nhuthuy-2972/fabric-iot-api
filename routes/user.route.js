@@ -10,6 +10,7 @@ router.post("/updatephonenumber", [middleware.verifytoken], controller.updatePho
 router.post("/sharedevice", [middleware.verifyOnwerShareDevice], controller.registerEnrollNewUser);
 router.post("/updatefieldshare", [middleware.verifyOnwerUpdateShareDevice], controller.updateSharefield);
 router.post("/getrefuserinfo", [middleware.verifyOnwer], controller.getRefUser);
+router.post("/getuserfield", [middleware.verifyOnwer], controller.getField);
 router.post("/gettoken", [middleware.ownerBCUser], controller.getToken);
 
 module.exports = router;

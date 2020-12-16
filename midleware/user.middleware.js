@@ -38,13 +38,14 @@ module.exports.verifyOnwer = async (req, res, next) => {
         return;
     }
 
-    console.log("do verify owner")
+    console.log("do verify owner ne he")
     try {
         const { uid } = await firebase.auth().verifyIdToken(token);
         const docs = db.collection("device").doc(deviceID)
         
         docs.get().then(async (doc) => {
             if (doc.exists && doc.data().auth === uid && doc.data().actived === 'yes')  {
+                console.log("next")
                 next();
                 // try {
                 //     const userRecord = await firebase.auth().getUserByEmail(shareAccount)
@@ -103,6 +104,7 @@ module.exports.verifyOnwerShareDevice = async (req, res, next) => {
                         res.json({success:false , message : "Người dùng đã tồn tại"})
                         return
                     }
+                    req.body.uid = uid
                     req.body.auth = userRecord.uid;
                     next();
                 } catch (err) {
@@ -153,6 +155,23 @@ module.exports.verifyOnwerUpdateShareDevice = async (req, res, next) => {
                     const userRecord = await firebase.auth().getUserByEmail(email)
                     console.log(userRecord.uid)
                     if(doc.data().refUser.includes(userRecord.uid)){
+                        // let identity = ''
+                        // await db.collection('bcAccounts').where("auth",'==',userRecord.uid).where("deviceID","==",deviceID).get().then(
+                        //     doc=>{
+                        //         if(doc.size > 0){
+                        //             doc.forEach(elem=>{
+                        //                 console.log("co user")
+                        //                 identity = doc.data().bcIdentity;
+                        //                 console.log(doc.data())
+                        //             })
+                        //         }else{
+                        //             res.status(401).json({success : false ,message : 'Uuser Account does not exits'})
+                        //             return;
+                        //         }
+                                
+                        //     }
+                        // ).catch(err=>{res.status(401).json({success : false ,message : err.message}) ;return})
+                        // console.log(identity)
                         req.body.auth = userRecord.uid;
                         next();
                     }else{

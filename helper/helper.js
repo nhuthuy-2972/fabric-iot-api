@@ -22,6 +22,17 @@ const getCCP = async (org) => {
 };
 
 // GET CA URL:
+const getCaPem = async (org, ccp) => {
+  let capem;
+  if (org == process.env.ORGWRITER) {
+    capem = ccp.certificateAuthorities[process.env.CAWRITER].tlsCACerts.pem;
+  } else if (org == process.env.ORGREADER) {
+    capem = ccp.certificateAuthorities[process.env.CAREADER].tlsCACerts.pem;
+  } else return null;
+  return capem;
+};
+
+
 const getCaUrl = async (org, ccp) => {
   let caURL;
   if (org == process.env.ORGWRITER) {
@@ -130,7 +141,7 @@ const getRegisterUser = async (username, userOrg, deviceID) => {
 };
 
 
-const getRegisterUser1 = async (username, userOrg, deviceID,role,sharefield) => {
+const getRegisterUser1 = async (username, userOrg, deviceID,sharefield) => {
   let ccp = await getCCP(userOrg);
   const caURL = await getCaUrl(userOrg, ccp);
   const ca = new FabricCAServices(caURL);
@@ -175,7 +186,7 @@ const getRegisterUser1 = async (username, userOrg, deviceID,role,sharefield) => 
         attrs: [
           { name: "deviceID", value: deviceID, ecert: true },
           {
-            name : 'role' , value : role , ecert : true 
+            name : 'role' , value : 'refuser' , ecert : true 
           },
           {
             name : 'refField',
@@ -223,9 +234,10 @@ const updateShareField = async (userId ,attrValue) =>
 {
 
   let ccp = await getCCP(process.env.ORGREADER);
-  const caURL = await getCaUrl(process.env.ORGREADER, ccp);
-  const caClient = new FabricCAServices(caURL);
-
+  const caInfo = await getCaInfo(process.env.ORGREADER,ccp)
+  const caURL = caInfo.url;
+  const caTLSCACerts =  caInfo.tlsCACerts.pem;
+  const caClient = new FabricCAServices(caURL, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
   const walletPath = await getWalletPath(process.env.ORGREADER);
   const wallet = await Wallets.newFileSystemWallet(walletPath);
   // console.log(`Wallet path: ${walletPath}`);
@@ -234,15 +246,16 @@ const updateShareField = async (userId ,attrValue) =>
 		const userIdentity = await wallet.get(userId);
 		if (!userIdentity) {
 			console.log(`${userId} does not exists in the wallet`);
-			// console.log(userIdentity);
-			return;
+      return;
 		}
 
 		const adminIdentity = await wallet.get(process.env.ADMINUSERID);
 		if (!adminIdentity) {
 			console.log('An identity for the admin user does not exist in the wallet');
-			console.log('Enroll the admin user before retrying');
-			return;
+      console.log('Enroll the admin user before retrying');
+      await enrollAdmin(process.env.ORGREADER, ccp);
+      adminIdentity = await wallet.get(process.env.ADMINUSERID);
+      console.log("Admin Enrolled Successfully");
 		}
 
 
@@ -276,10 +289,58 @@ const updateShareField = async (userId ,attrValue) =>
 			mspId: process.env.ORGREADERMSP,
 			type: 'X.509',
 		};
-		await wallet.put(userId, x509Identity);
+    await wallet.put(userId, x509Identity);
+    const respone = {
+      success : true,
+      message : 'Update attrs successfully'
+    }
+    return respone;
 	} catch (error) {
-		console.error(`Failed to update attrs ${error}`)
+    console.error(`Failed to update attrs ${error}`)
+    return error.message;
 	}
+}
+
+const getAttrsUSer = async (userId)=>
+{
+  let ccp = await getCCP(process.env.ORGREADER);
+  const caInfo = await getCaInfo(process.env.ORGREADER,ccp)
+  const caURL = caInfo.url;
+  const caTLSCACerts =  caInfo.tlsCACerts.pem;
+  const caClient = new FabricCAServices(caURL, { trustedRoots: caTLSCACerts, verify: false }, caInfo.caName);
+  const walletPath = await getWalletPath(process.env.ORGREADER);
+  const wallet = await Wallets.newFileSystemWallet(walletPath);
+  try {
+
+    const userIdentity = await wallet.get(userId);
+		if (!userIdentity) {
+			console.log(`${userId} does not exists in the wallet`);
+      return;
+		}
+
+		const adminIdentity = await wallet.get(process.env.ADMINUSERID);
+		if (!adminIdentity) {
+			console.log('An identity for the admin user does not exist in the wallet');
+      console.log('Enroll the admin user before retrying');
+      await enrollAdmin(process.env.ORGREADER, ccp);
+      adminIdentity = await wallet.get(process.env.ADMINUSERID);
+      console.log("Admin Enrolled Successfully");
+		}
+
+   
+
+		const provider = wallet.getProviderRegistry().getProvider(adminIdentity.type);
+		const adminProvider = await provider.getUserContext(adminIdentity, process.env.ADMINUSERID);
+    const identityService = caClient.newIdentityService()	
+    console.log("Aaaa")
+		const user =  await identityService.getOne(userId,adminProvider)
+    // console.log(user.result.attrs)
+    const attrs = user.result.attrs.find((item)=>item.name == 'refField')
+    console.log(JSON.parse(attrs.value))
+    return JSON.parse(attrs.value)
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 const isUserRegistered = async (username, userOrg) => {
@@ -357,6 +418,9 @@ exports.getRegisterUser = getRegisterUser;
 module.exports = {
   getCCP: getCCP,
   getWalletPath: getWalletPath,
+  getAttrsUSer:getAttrsUSer,
+  updateShareField : updateShareField,
   getRegisterUser: getRegisterUser,
+  getRegisterUser1: getRegisterUser1,
   isUserRegistered: isUserRegistered,
 };

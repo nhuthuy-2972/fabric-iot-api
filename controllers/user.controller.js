@@ -72,28 +72,30 @@ module.exports.adddevice = async (req, res) => {
 }
 
 module.exports.registerEnrollNewUser = async (req, res) => {
-    const { deviceID, sensors,auth} = req.body
+    const { deviceID, sensors,auth,uid} = req.body
 
-    if (!deviceID  || !sensors || !auth) {
+    if (!deviceID  || !sensors || !auth || !uid) {
         res.status(401).json(getErrorMessage());
         return;
     }
     const username = randomBytes(20).toString('hex');
     try {
-        let response = await helper.getRegisterUser1(username, process.env.ORGREADER, deviceID,'refuser',sensors);
+        let response = await helper.getRegisterUser1(username, process.env.ORGREADER, deviceID,sensors);
         if (response && typeof response !== "string") {
             logger.debug('Successfully registered the username %s for organization %s', username, process.env.ORGREADER);
             const doc = {
+                provider : uid,
                 auth: auth,
                 deviceID: deviceID,
                 bcIdentity: username,
+                revoke : false
             }
             const docref ={
                 auth : auth,
                 deviceID : deviceID,
-                data_fields : sensors
+                data_fields : sensors,
             }
-            await db.collection('fieldRef').add(docref)
+            // await db.collection('fieldRef').add(docref)
             await db.collection('bcAccounts').add(doc);
             await db.collection('device').doc(deviceID).update({
                 refUser : firebase.firestore.FieldValue.arrayUnion(auth)
@@ -117,22 +119,44 @@ module.exports.updateSharefield = async (req,res)=>
         return;
     }
     try{
-        
-
-        await db.collection('fieldRef').where("auth",'==',auth).where("deviceID","==",deviceID).get().then(doc=>{
-            doc.forEach(elem=>{
-                console.log(elem.id)
-                db.collection('fieldRef').doc(elem.id).update({
-                    data_fields : sensors
+        let identity = ''
+        await db.collection('bcAccounts').where("auth",'==',auth).where("deviceID","==",deviceID).get().then(
+            doc=>{
+                if(doc.size > 0){
+                    doc.forEach(elem=>{
+                        console.log("co user")
+                        identity = elem.data().bcIdentity;
+                        console.log(elem.data())
+                    })
+                }else{
+                    res.status(401).json({success : false ,message : 'Uuser Account does not exits'})
+                    return;
+                }
+                
+            }
+        ).catch(err=>{res.status(401).json({success : false ,message : err.message}) ;return})
+        console.log(identity)
+        const ressponeupdate = await helper.updateShareField(identity,sensors)
+        if(ressponeupdate && typeof ressponeupdate !== 'string'){
+            await db.collection('fieldRef').where("auth",'==',auth).where("deviceID","==",deviceID).get().then(doc=>{
+                doc.forEach(elem=>{
+                    console.log(elem.id)
+                    db.collection('fieldRef').doc(elem.id).update({
+                        data_fields : sensors
+                    })
                 })
-            })
-            res.json({success : true,message : "Update success"})
-        }).catch(err=>{res.status(401).json({success : false ,message : err.message})})
+                res.json({success : true,message : "Update success"})
+            }).catch(err=>{res.status(401).json({success : false ,message : err.message})})
+        }
+        else {
+            res.status(401).json({ success: false, message: ressponeupdate });
+        }
     }catch(err)
     {
+        console.log(err.message)
         res.status(401).json({success : false , message : err.message});
         return;
-        console.log(err.message)
+        
     }
 }
 
@@ -177,7 +201,7 @@ module.exports.getToken = async (req, res) => {
 };
 
 module.exports.getRefUser = async (req,res)=>{
-    const {refUsers} = req.body
+    const {refUsers,deviceID} = req.body
     logger.debug(
         "Username: " + refUsers
     );
@@ -187,9 +211,13 @@ module.exports.getRefUser = async (req,res)=>{
     }
 
     try{
+
+        await helper.getAttrsUSer('c192326faf276f682d422536e534550bdd334883');
+
         const usersid = await refUsers.map(uid=>{
             return {uid : uid}
         })
+
         const {users} = await firebase.auth().getUsers(usersid)
         // console.log(users)
         
@@ -204,6 +232,24 @@ module.exports.getRefUser = async (req,res)=>{
         })
     }catch(err)
     {
+        console.log(err)
+        res.status(401).json({
+            success : false, message : err.message
+        })
+    }
+}
+
+module.exports.getField = async (req,res)=>{
+    const {bcIdentity} = req.body
+    if (!bcIdentity) {
+        res.status(401).json(getErrorMessage());
+        return;
+    }
+    try {
+        const attrs = await helper.getAttrsUSer(bcIdentity);
+        res.json({success : true, data : attrs})
+    } catch (error) {
+        console.log(error)
         res.status(401).json({
             success : false, message : err.message
         })

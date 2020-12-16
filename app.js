@@ -71,6 +71,7 @@ app.use(
       "/api/user/updatephonenumber",
       "/api/user/getrefuserinfo",
       "/api/user/updatefieldshare",
+      "/api/user/getuserfield",
       "/api/device",
       "/api/device/pushdata",
     ],
