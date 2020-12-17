@@ -47,14 +47,6 @@ app.use(cors());
 // app.use(morgan);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-// app.use(
-//     expressJWT({
-//         secret: process.env.SECRECTJWT,
-//         algorithms: ["HS256"],
-//     }).unless({
-//         path: ["/api/auth", "/api/auth/register", "/api/auth/verify", "/api/auth/gettoken", "/api/device", "/api/device/pushdata"],
-//     })
-// );
 app.use(
   expressJWT({
     secret: process.env.SECRECTJWT,
@@ -72,7 +64,6 @@ app.use(
       "/api/user/getrefuserinfo",
       "/api/user/updatefieldshare",
       "/api/user/getuserfield",
-      "/api/device",
       "/api/device/pushdata",
     ],
   })

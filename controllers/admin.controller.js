@@ -127,12 +127,12 @@ module.exports.activedevice = async (req, res) => {
         batch.update(updateRef, { actived: "yes" });
         await batch.commit();
 
-       const deviceToken = jwt.sign({
-          bcIdentity : usernamewriter
-        },process.env.SECRECTJWT)
+       const deviceToken = jwt.sign(
+         usernamewriter
+        ,process.env.SECRECTJWT)
 
         const text = formatmail(email,deviceName,deviceID,deviceToken)
-        // sendmail("IOT-FABRIC-SERVICE", email, text)
+        sendmail("IOT-FABRIC-SERVICE", email, text)
         res.json({ status: true, message: "success" });
       } else {
         console.log(responsereader)
