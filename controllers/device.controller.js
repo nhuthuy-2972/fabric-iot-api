@@ -23,8 +23,13 @@ module.exports.getDataDevice = async (req, res) => {
     res.status(401).json(getErrorMessage());
     return;
   }
-  let response_payload = await device.getDataDevice(bcIdentity, deviceID);
-  res.send(response_payload);
+
+  try {
+    let response_payload = await device.getDataDevice(bcIdentity, deviceID);
+    res.send(response_payload);
+  } catch (error) {
+    res.status(403).json({ success: false, message: error.message });
+  }
 };
 
 module.exports.pushDataDevice = async (req, res) => {
@@ -44,8 +49,8 @@ module.exports.pushDataDevice = async (req, res) => {
   console.log(data);
   try {
     let response_payload = await device.pushDataDevice(identity, ID, data);
-    // record.set(`news/${deviceId}`, data);
-    res.send(response_payload);
+    record.set(`news/${ID}`, data);
+    res.json({ data: response_payload });
   } catch (e) {
     console.log("day ne", e);
     res.send(e);

@@ -221,7 +221,7 @@ module.exports.ownerBCUser = async (req, res, next) => {
     res.status(401).json(getErrorMessage());
     return;
   }
-
+  console.log(bcIdentity);
   try {
     const { uid } = await firebase.auth().verifyIdToken(token);
     const docs = db

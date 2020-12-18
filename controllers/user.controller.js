@@ -100,12 +100,16 @@ module.exports.registerEnrollNewUser = async (req, res) => {
         bcIdentity: username,
         revoke: false,
       };
+      let sensorscut = [];
+      for (let ss of sensors) {
+        if (ss.share === true) sensorscut.push(ss);
+      }
       const docref = {
         auth: auth,
         deviceID: deviceID,
-        data_fields: sensors,
+        data_fields: sensorscut,
       };
-      // await db.collection('fieldRef').add(docref)
+      await db.collection("fieldRef").add(docref);
       await db.collection("bcAccounts").add(doc);
       await db
         .collection("device")
@@ -165,8 +169,12 @@ module.exports.updateSharefield = async (req, res) => {
         .then((doc) => {
           doc.forEach((elem) => {
             console.log(elem.id);
+            let sensorscut = [];
+            for (let ss of sensors) {
+              if (ss.share === true) sensorscut.push(ss);
+            }
             db.collection("fieldRef").doc(elem.id).update({
-              data_fields: sensors,
+              data_fields: sensorscut,
             });
           });
           res.json({ success: true, message: "Update success" });
