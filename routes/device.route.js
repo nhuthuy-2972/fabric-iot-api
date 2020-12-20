@@ -13,6 +13,11 @@ router.post(
   controller.getDataDevice
 );
 router.post(
+  "/datastatisticaldevice",
+  [middleware.devicemidlewaregetdata],
+  controller.getDataStatisticalDevice
+);
+router.post(
   "/sensorsinfo",
   [middleware.devicemidlewaregetdata],
   controller.getDeviceField

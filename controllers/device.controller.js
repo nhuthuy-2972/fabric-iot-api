@@ -32,6 +32,30 @@ module.exports.getDataDevice = async (req, res) => {
   }
 };
 
+module.exports.getDataStatisticalDevice = async (req, res) => {
+  const { bcIdentity, deviceID } = req.decoded;
+  const { startDate, endDate } = req.body;
+  console.log("toi da");
+  console.log(bcIdentity, deviceID, startDate, endDate);
+  if (!bcIdentity || !deviceID || !startDate || !endDate) {
+    res.status(401).json(getErrorMessage());
+    return;
+  }
+  console.log("toi day ne");
+  try {
+    let response_payload = await device.getDataStatisticalDevice(
+      bcIdentity,
+      deviceID,
+      startDate,
+      endDate
+    );
+    console.log(response_payload.length);
+    res.send(response_payload);
+  } catch (error) {
+    res.status(403).json({ success: false, message: error.message });
+  }
+};
+
 module.exports.pushDataDevice = async (req, res) => {
   const body = req.body;
   const { ID } = body;

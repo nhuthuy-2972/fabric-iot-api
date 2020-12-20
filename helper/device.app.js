@@ -71,6 +71,62 @@ module.exports.getDataDevice = async (username, deviceID) => {
   }
 };
 
+module.exports.getDataStatisticalDevice = async (
+  username,
+  deviceID,
+  startDate,
+  endDate
+) => {
+  try {
+    const ccp = await helper.getCCP(process.env.ORGREADER); //JSON.parse(ccpJSON);
+    // Create a new file system based wallet for managing identities.
+    const walletPath = await helper.getWalletPath(process.env.ORGREADER); //.join(process.cwd(), 'wallet');
+    const wallet = await Wallets.newFileSystemWallet(walletPath);
+
+    // Check to see if we've already enrolled the user.
+    let identity = await wallet.get(username);
+    if (!identity) {
+      console.log(
+        `An identity for the user ${username} does not exist in the wallet, so registering user`
+      );
+      // await helper.getRegisteredUser(username, org_name, true)
+      // identity = await wallet.get(username);
+      console.log("Run the registerUser.js application before retrying");
+      return;
+    }
+    // console.log(identity.credentials.certificate);
+    const gateway = new Gateway();
+    await gateway.connect(ccp, {
+      wallet: wallet,
+      identity: username,
+      discovery: { enabled: true, asLocalhost: true },
+    });
+
+    const network = await gateway.getNetwork(process.env.CHANNELID);
+
+    const contract = network.getContract(process.env.CHAINCODENAME);
+    let result;
+
+    result = await contract.evaluateTransaction(
+      process.env.GETSTATISTICAL,
+      deviceID,
+      startDate,
+      endDate
+    );
+
+    result = JSON.parse(result);
+    console.log(result);
+    // for (let item in result) {
+    //   result[item].data = JSON.parse(result[item].data);
+    // }
+    // console.log(result);
+    return result;
+  } catch (error) {
+    console.error(`Failed to evaluate transaction: ${error}`);
+    return error.message;
+  }
+};
+
 module.exports.pushDataDevice = async (username, deviceID, data) => {
   try {
     const ccp = await helper.getCCP(process.env.ORGWRITER); //JSON.parse(ccpJSON);

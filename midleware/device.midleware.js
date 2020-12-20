@@ -17,10 +17,7 @@ module.exports.devicemidlewaregetdata = async (req, res, next) => {
     res.status(403).json(getErrorMessage());
     return;
   }
-  if (!token) {
-    res.status(403).json(getErrorMessage());
-    return;
-  }
+
   try {
     const decoded = await jwt.verify(token, process.env.SECRECTJWT);
     req.decoded = decoded;
