@@ -64,6 +64,7 @@ app.use(
       "/api/user/getrefuserinfo",
       "/api/user/updatefieldshare",
       "/api/user/getuserfield",
+      "/api/user/revokeuser",
       "/api/device/pushdata",
     ],
   })

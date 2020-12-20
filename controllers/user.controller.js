@@ -334,12 +334,20 @@ module.exports.rovokeUser = async (req, res) => {
     .then((snapshot) => {
       if (snapshot.size > 0) {
         snapshot.forEach(async (doc) => {
+          const id = doc.id;
           const bcIdentity = doc.data().bcIdentity;
           try {
-            const attrs = await helper.getAttrsUSer(bcIdentity);
-            const attrFiled = attrs.find((item) => item.name == "refField");
-            console.log(attrFiled);
-            res.json({ success: true, data: JSON.parse(attrFiled.value) });
+            const response = await helper.revokeUser(bcIdentity);
+            if (response && typeof response !== "string") {
+              await db.collection("bcAccounts").doc(id).delete();
+              await db
+                .collection("device")
+                .doc(deviceID)
+                .update({
+                  refUser: firebase.firestore.FieldValue.arrayRemove(auth),
+                });
+              res.json({ success: true, message: "success revoke user" });
+            }
           } catch (error) {
             console.log(error);
             res.status(401).json({

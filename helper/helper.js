@@ -351,6 +351,71 @@ const updateShareField = async (userId, attrValue) => {
   }
 };
 
+const revokeUser = async (userId) => {
+  let ccp = await getCCP(process.env.ORGREADER);
+  const caInfo = await getCaInfo(process.env.ORGREADER, ccp);
+  const caURL = caInfo.url;
+  const caTLSCACerts = caInfo.tlsCACerts.pem;
+  const caClient = new FabricCAServices(
+    caURL,
+    { trustedRoots: caTLSCACerts, verify: false },
+    caInfo.caName
+  );
+  const walletPath = await getWalletPath(process.env.ORGREADER);
+  const wallet = await Wallets.newFileSystemWallet(walletPath);
+  // console.log(`Wallet path: ${walletPath}`);
+
+  try {
+    const userIdentity = await wallet.get(userId);
+    if (!userIdentity) {
+      console.log(`${userId} does not exists in the wallet`);
+      return;
+    }
+
+    const adminIdentity = await wallet.get(process.env.ADMINUSERID);
+    if (!adminIdentity) {
+      console.log(
+        "An identity for the admin user does not exist in the wallet"
+      );
+      console.log("Enroll the admin user before retrying");
+      await enrollAdmin(process.env.ORGREADER, ccp);
+      adminIdentity = await wallet.get(process.env.ADMINUSERID);
+      console.log("Admin Enrolled Successfully");
+    }
+
+    const provider = wallet
+      .getProviderRegistry()
+      .getProvider(adminIdentity.type);
+    const adminProvider = await provider.getUserContext(
+      adminIdentity,
+      process.env.ADMINUSERID
+    );
+
+    const result = await caClient.revoke(
+      { enrollmentID: userId },
+      adminProvider
+    );
+
+    if (result.success === true) {
+      wallet.remove(userId);
+      const respone = {
+        success: true,
+        message: "Revoke successfully",
+      };
+      return respone;
+    } else {
+      const respone = {
+        success: false,
+        message: "Revoke failed",
+      };
+      return respone;
+    }
+  } catch (error) {
+    console.error(`Failed to revoke ${error}`);
+    return error.message;
+  }
+};
+
 const getAttrsUSer = async (userId) => {
   let ccp = await getCCP(process.env.ORGREADER);
   const caInfo = await getCaInfo(process.env.ORGREADER, ccp);
@@ -485,5 +550,6 @@ module.exports = {
   updateShareField: updateShareField,
   getRegisterUser: getRegisterUser,
   getRegisterUser1: getRegisterUser1,
+  revokeUser: revokeUser,
   isUserRegistered: isUserRegistered,
 };
