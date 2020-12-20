@@ -330,7 +330,7 @@ const updateShareField = async (userId, attrValue) => {
       userId
     );
     const enrollment = await caClient.reenroll(UserProvider);
-    console.log(enrollment);
+    // console.log(enrollment);
     const x509Identity = {
       credentials: {
         certificate: enrollment.certificate,

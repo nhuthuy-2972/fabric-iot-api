@@ -318,3 +318,49 @@ module.exports.getField = async (req, res) => {
       });
     });
 };
+
+module.exports.rovokeUser = async (req, res) => {
+  const { auth, provider, deviceID } = req.body;
+
+  if (!auth || !provider | deviceID) {
+    res.status(401).json(getErrorMessage());
+    return;
+  }
+  db.collection("bcAccounts")
+    .where("auth", "==", auth)
+    .where("deviceID", "==", deviceID)
+    .where("provider", "==", provider)
+    .get()
+    .then((snapshot) => {
+      if (snapshot.size > 0) {
+        snapshot.forEach(async (doc) => {
+          const bcIdentity = doc.data().bcIdentity;
+          try {
+            const attrs = await helper.getAttrsUSer(bcIdentity);
+            const attrFiled = attrs.find((item) => item.name == "refField");
+            console.log(attrFiled);
+            res.json({ success: true, data: JSON.parse(attrFiled.value) });
+          } catch (error) {
+            console.log(error);
+            res.status(401).json({
+              success: false,
+              message: error.message,
+            });
+          }
+        });
+      } else {
+        res.status(401).json({
+          success: false,
+          message: "no permission",
+        });
+        return;
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(401).json({
+        success: false,
+        message: err.message,
+      });
+    });
+};
