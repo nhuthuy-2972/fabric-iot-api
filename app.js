@@ -66,6 +66,7 @@ app.use(
       "/api/user/getuserfield",
       "/api/user/revokeuser",
       "/api/device/pushdata",
+      "/api/device/pushdatatestwaspmost",
     ],
   })
 );

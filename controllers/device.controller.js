@@ -13,10 +13,10 @@ const getErrorMessage = () => {
   };
   return respone;
 };
+const client = require("twilio")(process.env.ACCOUNTSID, process.env.AUTHTOKEN);
 
-// const { DeepstreamClient } = require("@deepstream/client");
-// const record = require("../app").record;
-import { record, client } from "../app";
+import { record } from "../app";
+import { db } from "../fbadim/fb-hook";
 module.exports.getDataDevice = async (req, res) => {
   const { bcIdentity, deviceID } = req.decoded;
   if (!bcIdentity || !deviceID) {
@@ -71,6 +71,48 @@ module.exports.pushDataDevice = async (req, res) => {
     ...body,
   };
   console.log(data);
+  for (let i in data) {
+    if (typeof data[i] === "string") data[i] = JSON.parse(data[i]);
+  }
+  console.log(data);
+  db.collection("device")
+    .doc(ID)
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        const device = doc.data();
+        if (device.warning === true) {
+          let message = "";
+          const phonenumber = device.phone_number;
+          for (const field of device.data_fields) {
+            if (data[field.field_name] < field.min) {
+              message += `${field.field_display} vượt mức cảnh báo (${
+                data[field.field_name]
+              } < ${field.min})\n`;
+            }
+            if (data[field.field_name] > field.max) {
+              message += `${field.field_display} vượt mức cảnh báo (${
+                data[field.field_name]
+              } > ${field.max})\n`;
+            }
+          }
+          console.log(message);
+          if (message !== "") {
+            db.collection("notifications").add({
+              deviceID: ID,
+              message: message,
+            });
+            // client.messages
+            //   .create({
+            //     body: message,
+            //     from: "+12315977969",
+            //     to: phonenumber,
+            //   })
+            //   .then((message) => console.log(message.sid));
+          }
+        }
+      }
+    });
   try {
     let response_payload = await device.pushDataDevice(identity, ID, data);
     record.set(`news/${ID}`, data);
@@ -79,6 +121,76 @@ module.exports.pushDataDevice = async (req, res) => {
     console.log("day ne", e);
     res.send(e);
   }
+};
+
+module.exports.pushDataDeviceTestWaspmost = async (req, res) => {
+  const body = req.body;
+  const { ID } = body;
+  const identity = req.identity;
+  if (!ID || !identity) {
+    res.status(401).json(getErrorMessage());
+    return;
+  }
+  // body.timestamp = new Date(body.timestamp * 1000).toLocaleString();
+  // body.timestamp = Math.ceil(new Date().getTime() / 1000);
+  console.log(new Date(body.timestamp * 1000).toLocaleString());
+  delete body.ID;
+  const data = {
+    ...body,
+  };
+  console.log(data);
+  for (let i in data) {
+    if (typeof data[i] === "string") data[i] = JSON.parse(data[i]);
+  }
+  console.log(data);
+  return res.status(200).json({
+    message: "Successful",
+    data,
+  });
+  // db.collection("device")
+  //   .doc(ID)
+  //   .get()
+  //   .then((doc) => {
+  //     if (doc.exists) {
+  //       const device = doc.data();
+  //       if (device.warning === true) {
+  //         let message = "";
+  //         const phonenumber = device.phone_number;
+  //         for (const field of device.data_fields) {
+  //           if (data[field.field_name] < field.min) {
+  //             message += `${field.field_display} vượt mức cảnh báo (${
+  //               data[field.field_name]
+  //             } < ${field.min})\n`;
+  //           }
+  //           if (data[field.field_name] > field.max) {
+  //             message += `${field.field_display} vượt mức cảnh báo (${
+  //               data[field.field_name]
+  //             } > ${field.max})\n`;
+  //           }
+  //         }
+
+  //         if (message !== "") {
+  //           client.messages
+  //             .create({
+  //               body:
+  //                 "This is the ship that made the Kessel Run in fourteen parsecs?",
+  //               from: "+84392597878",
+  //               to: phonenumber,
+  //             })
+  //             .then((message) => console.log(message.sid));
+  //         }
+  //       }
+  //     }
+  //   });
+  // console.log(data);
+  // try {
+  //   let response_payload = await device.pushDataDevice(identity, ID, data);
+  //   record.set(`news/${ID}`, data);
+  //   res.json({ data: response_payload });
+  // } catch (e) {
+  //   console.log("day ne", e);
+  //   res.send(e);
+  // }
 };
 
 module.exports.getDeviceField = async (req, res) => {

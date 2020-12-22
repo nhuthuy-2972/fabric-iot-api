@@ -29,4 +29,10 @@ router.post(
   controller.pushDataDevice
 );
 
+router.post(
+  "/pushdatatestwaspmost",
+  [middleware.devicemidlewarepost],
+  controller.pushDataDeviceTestWaspmost
+);
+
 module.exports = router;
