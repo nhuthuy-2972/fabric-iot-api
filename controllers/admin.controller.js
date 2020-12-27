@@ -7,7 +7,7 @@ const { randomBytes } = require("crypto");
 const dotenv = require("dotenv");
 import { db, firebase } from "../fbadim/fb-hook";
 import { sendmail } from "../mailer/mailer";
-import {formatmail} from '../config/utils'
+import { formatmail } from "../config/utils";
 import { token } from "morgan";
 dotenv.config();
 const getErrorMessage = () => {
@@ -67,80 +67,78 @@ module.exports.setcustomClaims = async (req, res) => {
 
 module.exports.activedevice = async (req, res) => {
   // res.json({ status: "oke bede" });
-    const { deviceID, auth,email,deviceName } = req.body;
+  const { deviceID, auth, email, deviceName } = req.body;
 
-    if (!auth || !deviceID || !email || !deviceName) {
-      res.json(getErrorMessage());
-      return;
-    }
-    const usernamereader = randomBytes(20).toString("hex");
-    const usernamewriter = randomBytes(10).toString("hex");
+  if (!auth || !deviceID || !email || !deviceName) {
+    res.json(getErrorMessage());
+    return;
+  }
+  const usernamereader = randomBytes(20).toString("hex");
+  const usernamewriter = randomBytes(10).toString("hex");
 
-    try {
-      let responsereader = await helper.getRegisterUser(
-        usernamereader,
-        process.env.ORGREADER,
-        deviceID
-      );
-      let responsewriter = await helper.getRegisterUser(
+  try {
+    let responsereader = await helper.getRegisterUser(
+      usernamereader,
+      process.env.ORGREADER,
+      deviceID
+    );
+    let responsewriter = await helper.getRegisterUser(
+      usernamewriter,
+      process.env.ORGWRITER,
+      deviceID
+    );
+    console.log("Aaa");
+    if (
+      responsewriter &&
+      typeof responsewriter !== "string" &&
+      responsereader &&
+      typeof responsereader !== "string"
+    ) {
+      logger.debug(
+        "Successfully registered the username %s for organization %s",
         usernamewriter,
-        process.env.ORGWRITER,
-        deviceID
+        process.env.ORGWRITER
       );
-      console.log("Aaa")
-      if (
-        responsewriter &&
-        typeof responsewriter !== "string" &&
-        responsereader &&
-        typeof responsereader !== "string"
-      ) {
-        logger.debug(
-          "Successfully registered the username %s for organization %s",
-          usernamewriter,
-          process.env.ORGWRITER
-        );
-        logger.debug(
-          "Successfully registered the username %s for organization %s",
-          usernamereader,
-          process.env.ORGREADER
-        );
-        const docreader = {
-          auth: auth,
-          deviceID: deviceID,
-          bcIdentity: usernamereader,
-          revoke :false
-        };
-        const docwriter = {
-          auth: auth,
-          deviceID: deviceID,
-          bcIdentity: usernamewriter,
-          revoke :false
-        };
-        let batch = db.batch();
+      logger.debug(
+        "Successfully registered the username %s for organization %s",
+        usernamereader,
+        process.env.ORGREADER
+      );
+      const docreader = {
+        auth: auth,
+        deviceID: deviceID,
+        bcIdentity: usernamereader,
+        revoke: false,
+      };
+      const docwriter = {
+        auth: auth,
+        deviceID: deviceID,
+        bcIdentity: usernamewriter,
+        revoke: false,
+      };
+      let batch = db.batch();
 
-        const readerRef = db.collection("bcAccounts").doc();
-        // const writerRef = db.collection("bcAccounts").doc();
-        const writerRef = db.collection('deviceTokens').doc();
-        const updateRef = db.collection("device").doc(deviceID);
-        batch.set(readerRef, docreader);
-        batch.set(writerRef, docwriter);
-        batch.update(updateRef, { actived: "yes" });
-        await batch.commit();
+      const readerRef = db.collection("bcAccounts").doc();
+      // const writerRef = db.collection("bcAccounts").doc();
+      const writerRef = db.collection("deviceTokens").doc();
+      const updateRef = db.collection("devices").doc(deviceID);
+      batch.set(readerRef, docreader);
+      batch.set(writerRef, docwriter);
+      batch.update(updateRef, { actived: true });
+      await batch.commit();
 
-       const deviceToken = jwt.sign(
-         usernamewriter
-        ,process.env.SECRECTJWT)
+      const deviceToken = jwt.sign(usernamewriter, process.env.SECRECTJWT);
 
-        const text = formatmail(email,deviceName,deviceID,deviceToken)
-        sendmail("IOT-FABRIC-SERVICE", email, text)
-        res.json({ status: true, message: "success" });
-      } else {
-        console.log(responsereader)
-        console.log(responsewriter)
-        res.json({ success: false, message: "Failed register user" });
-      }
-    } catch (err) {
-      console.error(err);
-      res.json({ success: false, message: err.message });
+      const text = formatmail(email, deviceName, deviceID, deviceToken);
+      sendmail("IOT-FABRIC-SERVICE", email, text);
+      res.json({ status: true, message: "success" });
+    } else {
+      console.log(responsereader);
+      console.log(responsewriter);
+      res.json({ success: false, message: "Failed register user" });
     }
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false, message: err.message });
+  }
 };

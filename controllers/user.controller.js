@@ -47,9 +47,9 @@ module.exports.adddevice = async (req, res) => {
     return;
   }
   try {
-    const { id } = await db.collection("device").add({
+    const { id } = await db.collection("devices").add({
       ...infoDevice,
-      actived: "no",
+      actived: false,
       auth: uid,
       email: email,
       refUser: [],
@@ -112,7 +112,7 @@ module.exports.registerEnrollNewUser = async (req, res) => {
       await db.collection("fieldRef").add(docref);
       await db.collection("bcAccounts").add(doc);
       await db
-        .collection("device")
+        .collection("devices")
         .doc(deviceID)
         .update({
           refUser: firebase.firestore.FieldValue.arrayUnion(auth),
@@ -341,7 +341,7 @@ module.exports.rovokeUser = async (req, res) => {
             if (response && typeof response !== "string") {
               await db.collection("bcAccounts").doc(id).delete();
               await db
-                .collection("device")
+                .collection("devices")
                 .doc(deviceID)
                 .update({
                   refUser: firebase.firestore.FieldValue.arrayRemove(auth),

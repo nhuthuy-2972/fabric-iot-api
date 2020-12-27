@@ -17,6 +17,12 @@ router.post(
   [middleware.devicemidlewaregetdata],
   controller.getDataStatisticalDevice
 );
+
+router.post(
+  "/downloadstatisticaldevice",
+  [middleware.devicemidlewaregetdata],
+  controller.downloadDataStatisticalDevice
+);
 router.post(
   "/sensorsinfo",
   [middleware.devicemidlewaregetdata],

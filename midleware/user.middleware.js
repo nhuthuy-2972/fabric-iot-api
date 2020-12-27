@@ -40,13 +40,13 @@ module.exports.verifyOnwer = async (req, res, next) => {
   console.log("do verify owner ne he");
   try {
     const { uid } = await firebase.auth().verifyIdToken(token);
-    const docs = db.collection("device").doc(deviceID);
+    const docs = db.collection("devices").doc(deviceID);
 
     docs.get().then(async (doc) => {
       if (
         doc.exists &&
         doc.data().auth === uid &&
-        doc.data().actived === "yes"
+        doc.data().actived === true
       ) {
         console.log("next");
         req.body.provider = uid;
@@ -93,12 +93,12 @@ module.exports.verifyOnwerShareDevice = async (req, res, next) => {
   console.log("do verify owner");
   try {
     const { uid } = await firebase.auth().verifyIdToken(token);
-    const docs = db.collection("device").doc(deviceID);
+    const docs = db.collection("devices").doc(deviceID);
     docs.get().then(async (doc) => {
       if (
         doc.exists &&
         doc.data().auth === uid &&
-        doc.data().actived === "yes"
+        doc.data().actived === true
       ) {
         // next();
         try {
@@ -151,12 +151,12 @@ module.exports.verifyOnwerUpdateShareDevice = async (req, res, next) => {
   console.log("do verify owner");
   try {
     const { uid } = await firebase.auth().verifyIdToken(token);
-    const docs = db.collection("device").doc(deviceID);
+    const docs = db.collection("devices").doc(deviceID);
     docs.get().then(async (doc) => {
       if (
         doc.exists &&
         doc.data().auth === uid &&
-        doc.data().actived === "yes"
+        doc.data().actived === true
       ) {
         // next();
         try {

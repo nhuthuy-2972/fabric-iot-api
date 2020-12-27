@@ -4,6 +4,8 @@ const logger = log4js.getLogger("APP.JS");
 const helper = require("../helper/helper");
 const device = require("../helper/device.app");
 const constants = require("../config/constans.json");
+const { Parser } = require("json2csv");
+const fs = require("fs");
 const dotenv = require("dotenv");
 dotenv.config();
 const getErrorMessage = () => {
@@ -55,6 +57,43 @@ module.exports.getDataStatisticalDevice = async (req, res) => {
     res.status(403).json({ success: false, message: error.message });
   }
 };
+module.exports.downloadDataStatisticalDevice = async (req, res) => {
+  const { bcIdentity, deviceID } = req.decoded;
+  const { startDate, endDate } = req.body;
+  console.log("toi da");
+  console.log(bcIdentity, deviceID, startDate, endDate);
+  if (!bcIdentity || !deviceID || !startDate || !endDate) {
+    res.status(401).json(getErrorMessage());
+    return;
+  }
+  console.log("toi day ne");
+  try {
+    let response_payload = await device.getDataStatisticalDevice(
+      bcIdentity,
+      deviceID,
+      startDate,
+      endDate
+    );
+    console.log(response_payload.length);
+    const temp = response_payload[0].data;
+    let fields = [];
+    for (const i in temp) {
+      console.log(i);
+      fields.push({ label: i, value: i });
+    }
+    const getdata = response_payload.map((item) => item.data);
+    const x = new Parser({ fields });
+    const content = x.parse(getdata);
+    console.log(content);
+
+    // const result = await fs.writeFile(`./data.csv`, content);
+    res.header("Content-Type", "text/csv");
+    res.attachment("data.csv");
+    res.send(content);
+  } catch (error) {
+    res.status(403).json({ success: false, message: error.message });
+  }
+};
 
 module.exports.pushDataDevice = async (req, res) => {
   const body = req.body;
@@ -75,7 +114,7 @@ module.exports.pushDataDevice = async (req, res) => {
     if (typeof data[i] === "string") data[i] = JSON.parse(data[i]);
   }
   console.log(data);
-  db.collection("device")
+  db.collection("devices")
     .doc(ID)
     .get()
     .then((doc) => {
@@ -147,7 +186,7 @@ module.exports.pushDataDeviceTestWaspmost = async (req, res) => {
     message: "Successful",
     data,
   });
-  // db.collection("device")
+  // db.collection("devices")
   //   .doc(ID)
   //   .get()
   //   .then((doc) => {
