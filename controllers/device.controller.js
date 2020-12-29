@@ -158,7 +158,7 @@ module.exports.pushDataDevice = async (req, res) => {
     res.json({ data: response_payload });
   } catch (e) {
     console.log("day ne", e);
-    res.send(e);
+    res.status(403).json({ success: false, message: e.message });
   }
 };
 

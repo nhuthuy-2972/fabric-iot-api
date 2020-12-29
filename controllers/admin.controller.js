@@ -7,7 +7,7 @@ const { randomBytes } = require("crypto");
 const dotenv = require("dotenv");
 import { db, firebase } from "../fbadim/fb-hook";
 import { sendmail } from "../mailer/mailer";
-import { formatmail } from "../config/utils";
+import { formatmail, formatmailrefreshtoken } from "../config/utils";
 import { token } from "morgan";
 dotenv.config();
 const getErrorMessage = () => {
@@ -70,7 +70,7 @@ module.exports.activedevice = async (req, res) => {
   const { deviceID, auth, email, deviceName } = req.body;
 
   if (!auth || !deviceID || !email || !deviceName) {
-    res.json(getErrorMessage());
+    res.status(403).json(getErrorMessage());
     return;
   }
   const usernamereader = randomBytes(20).toString("hex");
@@ -131,7 +131,7 @@ module.exports.activedevice = async (req, res) => {
 
       const text = formatmail(email, deviceName, deviceID, deviceToken);
       sendmail("IOT-FABRIC-SERVICE", email, text);
-      res.json({ status: true, message: "success" });
+      res.json({ success: true, message: "success" });
     } else {
       console.log(responsereader);
       console.log(responsewriter);
@@ -140,5 +140,73 @@ module.exports.activedevice = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.json({ success: false, message: err.message });
+  }
+};
+
+module.exports.refreshToken = async (req, res) => {
+  const {
+    bcIdentity,
+    oldtoken,
+    auth,
+    deviceID,
+    docId,
+    email,
+    deviceName,
+  } = req.body;
+  if (
+    !bcIdentity ||
+    !oldtoken ||
+    !auth ||
+    !deviceID ||
+    !docId ||
+    !email ||
+    !deviceName
+  ) {
+    res.status(403).json(getErrorMessage());
+    return;
+  }
+  try {
+    const isregisterd = await helper.isUserRegistered(
+      bcIdentity,
+      process.env.ORGWRITER
+    );
+
+    if (isregisterd) {
+      const revoked = await helper.revokeUser(
+        bcIdentity,
+        process.env.ORGWRITER
+      );
+      if (revoked && typeof revoked !== "string") {
+        const usernamewriter = randomBytes(10).toString("hex");
+        let responsewriter = await helper.getRegisterUser(
+          usernamewriter,
+          process.env.ORGWRITER,
+          deviceID
+        );
+        if (responsewriter && typeof responsewriter !== "string") {
+          await db
+            .collection("deviceTokens")
+            .doc(docId)
+            .update({ bcIdentity: usernamewriter });
+        }
+        const deviceToken = jwt.sign(usernamewriter, process.env.SECRECTJWT);
+
+        const text = formatmailrefreshtoken(
+          email,
+          deviceName,
+          deviceID,
+          deviceToken
+        );
+        sendmail("IOT-FABRIC-SERVICE", email, text);
+        res.json({ success: true, message: "success refresh device token" });
+      }
+    } else {
+      res
+        .status(403)
+        .json({ success: false, message: "user does not registered" });
+    }
+  } catch (err) {
+    console.log(err.message);
+    res.status(403).json({ success: false, message: err.message });
   }
 };

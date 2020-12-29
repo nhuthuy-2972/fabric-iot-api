@@ -351,9 +351,9 @@ const updateShareField = async (userId, attrValue) => {
   }
 };
 
-const revokeUser = async (userId) => {
-  let ccp = await getCCP(process.env.ORGREADER);
-  const caInfo = await getCaInfo(process.env.ORGREADER, ccp);
+const revokeUser = async (userId, ORGNAME) => {
+  let ccp = await getCCP(ORGNAME);
+  const caInfo = await getCaInfo(ORGNAME, ccp);
   const caURL = caInfo.url;
   const caTLSCACerts = caInfo.tlsCACerts.pem;
   const caClient = new FabricCAServices(
@@ -361,7 +361,7 @@ const revokeUser = async (userId) => {
     { trustedRoots: caTLSCACerts, verify: false },
     caInfo.caName
   );
-  const walletPath = await getWalletPath(process.env.ORGREADER);
+  const walletPath = await getWalletPath(ORGNAME);
   const wallet = await Wallets.newFileSystemWallet(walletPath);
   // console.log(`Wallet path: ${walletPath}`);
 
@@ -378,7 +378,7 @@ const revokeUser = async (userId) => {
         "An identity for the admin user does not exist in the wallet"
       );
       console.log("Enroll the admin user before retrying");
-      await enrollAdmin(process.env.ORGREADER, ccp);
+      await enrollAdmin(ORGNAME, ccp);
       adminIdentity = await wallet.get(process.env.ADMINUSERID);
       console.log("Admin Enrolled Successfully");
     }

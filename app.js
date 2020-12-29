@@ -56,6 +56,7 @@ app.use(
       "/api/admin",
       "/api/admin/setcustomclaims",
       "/api/admin/activedevice",
+      "/api/admin/refreshdevicetoken",
       "/api/user",
       "/api/user/sharedevice",
       "/api/user/adddevice",

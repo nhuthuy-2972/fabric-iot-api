@@ -337,7 +337,10 @@ module.exports.rovokeUser = async (req, res) => {
           const id = doc.id;
           const bcIdentity = doc.data().bcIdentity;
           try {
-            const response = await helper.revokeUser(bcIdentity);
+            const response = await helper.revokeUser(
+              bcIdentity,
+              process.env.ORGREADER
+            );
             if (response && typeof response !== "string") {
               await db.collection("bcAccounts").doc(id).delete();
               await db
